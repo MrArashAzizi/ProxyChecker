@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/rounded_background_for_btm"
+    android:orientation="vertical"
+    android:paddingLeft="16dp"
+    android:paddingRight="16dp">
+
+
+    <ImageView
+        android:id="@+id/Minus"
+        android:layout_width="40dp"
+        android:layout_height="16dp"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_gravity="center"
+        android:layout_marginTop="8dp"
+        android:alpha="0.3"
+        android:padding="5dp"
+        android:scaleType="centerCrop"
+        android:src="@drawable/minus"
+        app:tint="@color/black" />
+
+    <ImageView
+        android:id="@+id/resultCheck"
+        android:layout_width="75dp"
+        android:layout_height="75dp"
+        android:layout_below="@+id/Minus"
+        android:layout_centerHorizontal="true"
+        android:layout_gravity="center"
+        android:layout_marginTop="16dp"
+        android:padding="5dp"
+        android:src="@drawable/ic_check"
+        app:tint="@color/Green" />
+
+    <TextView
+        android:id="@+id/resultTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/resultCheck"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="16dp"
+        android:padding="4dp"
+        android:text="The Proxy is Alive!"
+        android:textAlignment="center"
+        android:textColor="@color/Green"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/resultFinalIPTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/resultTitle"
+        android:layout_alignParentLeft="true"
+        android:layout_marginTop="16dp"
+        android:alpha="0.6"
+        android:text="Final IP"
+        android:textColor="@color/black"
+        android:textSize="14sp" />
+
+    <TextView
+        android:id="@+id/resultFinalIP"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/resultFinalIPTitle"
+        android:layout_alignBottom="@+id/resultFinalIPTitle"
+        android:layout_alignParentRight="true"
+        android:text="255.255.255.255"
+        android:textColor="@color/black"
+        android:textSize="14sp" />
+
+    <ImageView
+        android:id="@+id/Divider1"
+        android:layout_width="match_parent"
+        android:layout_height="5dp"
+        android:layout_below="@+id/resultFinalIP"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="12dp"
+        android:alpha="0.2"
+        android:layerType="software"
+        android:src="@drawable/dashed_line" />
+
+    <TextView
+        android:id="@+id/resultCountryTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/Divider1"
+        android:layout_alignParentLeft="true"
+        android:alpha="0.6"
+        android:text="Country"
+        android:textColor="@color/black"
+        android:textSize="14sp" />
+
+    <TextView
+        android:id="@+id/resultCountry"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/resultCountryTitle"
+        android:layout_alignBottom="@+id/resultCountryTitle"
+        android:layout_alignParentRight="true"
+        android:text="United Kingdom"
+        android:textColor="@color/black"
+        android:textSize="14sp" />
+
+    <ImageView
+        android:id="@+id/Divider2"
+        android:layout_width="match_parent"
+        android:layout_height="5dp"
+        android:layout_below="@+id/resultCountry"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="12dp"
+        android:alpha="0.2"
+        android:layerType="software"
+        android:src="@drawable/dashed_line" />
+
+    <TextView
+        android:id="@+id/resultCityTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/Divider2"
+        android:layout_alignParentLeft="true"
+        android:alpha="0.6"
+        android:text="City"
+        android:textColor="@color/black"
+        android:textSize="14sp" />
+
+    <TextView
+        android:id="@+id/resultCity"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/resultCityTitle"
+        android:layout_alignBottom="@+id/resultCityTitle"
+        android:layout_alignParentRight="true"
+        android:text="Manchester"
+        android:textColor="@color/black"
+        android:textSize="14sp" />
+
+    <ImageView
+        android:id="@+id/Divider3"
+        android:layout_width="match_parent"
+        android:layout_height="5dp"
+        android:layout_below="@+id/resultCity"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="12dp"
+        android:alpha="0.2"
+        android:layerType="software"
+        android:src="@drawable/dashed_line" />
+
+    <TextView
+        android:id="@+id/resultISPTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/Divider3"
+        android:layout_alignParentLeft="true"
+        android:layout_marginBottom="28dp"
+        android:alpha="0.6"
+        android:text="ISP Name"
+        android:textColor="@color/black"
+        android:textSize="14sp" />
+
+    <TextView
+        android:id="@+id/resultISP"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/resultISPTitle"
+        android:layout_alignBottom="@+id/resultISPTitle"
+        android:layout_alignParentRight="true"
+        android:text="Asiatech Data Transmission company"
+        android:textColor="@color/black"
+        android:textSize="14sp" />
+
+</RelativeLayout>
