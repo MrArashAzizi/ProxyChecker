@@ -1,21 +1,19 @@
 package github.arash.kotlin.proxychecker
 
 import android.app.AlertDialog
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.Uri
 import android.os.Bundle
+import android.os.StrictMode
 import android.util.Log
-import android.view.LayoutInflater
-import android.view.Menu
-import android.view.MenuItem
-import android.view.View
+import android.view.*
 import android.view.View.GONE
 import android.view.View.VISIBLE
-import android.widget.CompoundButton
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import com.androidnetworking.AndroidNetworking
@@ -23,12 +21,11 @@ import com.androidnetworking.error.ANError
 import com.androidnetworking.interfaces.JSONObjectRequestListener
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.android.material.snackbar.Snackbar
 import github.arash.kotlin.proxychecker.databinding.ActivityMainBinding
-import github.arash.kotlin.proxychecker.databinding.DesignSettingBtmBinding
 import github.arash.kotlin.proxychecker.databinding.DesignTelegramInputDialogBinding
 import okhttp3.OkHttpClient
 import org.json.JSONObject
-import java.lang.Exception
 import java.net.Authenticator
 import java.net.InetSocketAddress
 import java.net.PasswordAuthentication
@@ -48,26 +45,15 @@ class MainActivity : AppCompatActivity() {
         AndroidNetworking.initialize(this)
         PreferenceHelper.initialize(this)
 
-        binding.ProxyAddress.setText(
-            PreferenceHelper.getInstance().getString(G.ProxyAddress_SharedPreferencesKey, "")
-        )
-        binding.ProxyPort.setText(
-            PreferenceHelper.getInstance().getString(G.PortNumber_SharedPreferencesKey, "")
-        )
-        binding.ProxyUsername.setText(
-            PreferenceHelper.getInstance().getString(G.Username_SharedPreferencesKey, "")
-        )
-        binding.ProxyPassword.setText(
-            PreferenceHelper.getInstance().getString(G.Password_SharedPreferencesKey, "")
-        )
+        StrictMode.setThreadPolicy(StrictMode.ThreadPolicy.Builder().permitAll().build())
 
-        PreferenceHelper.getInstance().getString(G.PortNumber_SharedPreferencesKey, "")
-        PreferenceHelper.getInstance().getString(G.Username_SharedPreferencesKey, "")
-        PreferenceHelper.getInstance().getString(G.Password_SharedPreferencesKey, "")
+        //Enter data from SharedPreferences
+        binding.ProxyAddress.setText(PreferenceHelper.getInstance().getString(G.ProxyAddress_SharedPreferencesKey, ""))
+        binding.ProxyPort.setText(PreferenceHelper.getInstance().getString(G.PortNumber_SharedPreferencesKey, ""))
+        binding.ProxyUsername.setText(PreferenceHelper.getInstance().getString(G.Username_SharedPreferencesKey, ""))
+        binding.ProxyPassword.setText(PreferenceHelper.getInstance().getString(G.Password_SharedPreferencesKey, ""))
 
-
-        val connectivityManager: ConnectivityManager =
-            getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val connectivityManager: ConnectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         if (connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_VPN)!!.isConnectedOrConnecting)
             binding.vpnAlertTV.visibility = VISIBLE
 
@@ -79,36 +65,21 @@ class MainActivity : AppCompatActivity() {
 
             //Proxy Type
             if (binding.ProxyTypeToggleGroup.checkedButtonId == R.id.ProxyTypeHTTPS)
-                okHttpClient = OkHttpClient.Builder()
-                    .proxy(
-                        Proxy(
-                            Proxy.Type.HTTP, InetSocketAddress(
-                                binding.ProxyAddress.text.toString(),
-                                binding.ProxyPort.text.toString().toInt()
-                            )
-                        )
-                    ).build()
+                okHttpClient = OkHttpClient.Builder().proxy(Proxy(Proxy.Type.HTTP,
+                    InetSocketAddress(binding.ProxyAddress.text.toString(),
+                                binding.ProxyPort.text.toString().toInt()))).build()
             else
-                okHttpClient = OkHttpClient.Builder().proxy(
-                    Proxy(
-                        Proxy.Type.SOCKS, InetSocketAddress(
-                            binding.ProxyAddress.text.toString(),
-                            binding.ProxyPort.text.toString().toInt()
-                        )
-                    )
-                ).build()
+                okHttpClient = OkHttpClient.Builder().proxy(Proxy(Proxy.Type.SOCKS,
+                    InetSocketAddress(binding.ProxyAddress.text.toString(),
+                            binding.ProxyPort.text.toString().toInt()))).build()
 
             //Proxy Credential
             Authenticator.setDefault(object : Authenticator() {
                 override fun getPasswordAuthentication(): PasswordAuthentication? {
-                    if (requestingHost.equals(
-                            binding.ProxyAddress.text.toString(),
-                        )
-                    ) if (binding.ProxyPort.text.toString()
-                            .toInt() == requestingPort
-                    ) return PasswordAuthentication(
-                        binding.ProxyUsername.text.toString(),
-                        binding.ProxyPassword.text.toString().toCharArray()
+                    if (requestingHost.equals(binding.ProxyAddress.text.toString()))
+                        if (requestingPort == binding.ProxyPort.text.toString().toInt())
+                            return PasswordAuthentication(binding.ProxyUsername.text.toString(),
+                                binding.ProxyPassword.text.toString().toCharArray()
                     )
                     return null
                 }
@@ -150,29 +121,33 @@ class MainActivity : AppCompatActivity() {
                         binding.ProgressBar.visibility = GONE
                         binding.StartTheTestButton.text = "Test The Proxy"
                         binding.StartTheTestButton.isEnabled = true
+                        Snackbar.make(binding.root, "Connection failed", Snackbar.LENGTH_LONG)
+                            .setAction("Copy info") {
+                                val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
+                                val clip = ClipData.newPlainText("Copied Text", anError?.message.toString())
+                                clipboard.setPrimaryClip(clip)
+                            }.show()
                     }
                 })
 
-            PreferenceHelper.getInstance().setString(
-                G.ProxyAddress_SharedPreferencesKey,
-                binding.ProxyAddress.text.toString()
-            )
-            PreferenceHelper.getInstance()
-                .setString(G.PortNumber_SharedPreferencesKey, binding.ProxyPort.text.toString())
+            PreferenceHelper.getInstance().setString(G.ProxyAddress_SharedPreferencesKey, binding.ProxyAddress.text.toString())
+            PreferenceHelper.getInstance().setString(G.PortNumber_SharedPreferencesKey, binding.ProxyPort.text.toString())
 
             if (PreferenceHelper.getInstance().getBoolean(G.SaveCredential_SharedPreferencesKey)) {
                 PreferenceHelper.getInstance()
-                    .setString(
-                        G.Username_SharedPreferencesKey,
-                        binding.ProxyUsername.text.toString()
-                    )
+                    .setString(G.Username_SharedPreferencesKey, binding.ProxyUsername.text.toString())
                 PreferenceHelper.getInstance()
-                    .setString(
-                        G.Password_SharedPreferencesKey,
-                        binding.ProxyPassword.text.toString()
-                    )
+                    .setString(G.Password_SharedPreferencesKey, binding.ProxyPassword.text.toString())
             }
         }
+
+        binding.SaveCredentialCheckBox.isChecked =
+            PreferenceHelper.getInstance().getBoolean(G.SaveCredential_SharedPreferencesKey)
+        binding.SaveCredentialCheckBox.setOnCheckedChangeListener { _, isChecked ->
+            PreferenceHelper.getInstance()
+                .setBoolean(G.SaveCredential_SharedPreferencesKey, isChecked)
+        }
+
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -184,36 +159,11 @@ class MainActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.Action_Github ->
-                startActivity(
-                    Intent(
-                        Intent.ACTION_VIEW,
-                        Uri.parse("https://github.com/MrArashAzizi/Proxy-Checking-Tool")
-                    )
-                )
-            R.id.Action_Setting -> settingBottomSheetDialog()
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.github_address))))
 
             R.id.Action_ImportTelegramProxy -> importTelegramProxy()
         }
         return super.onOptionsItemSelected(item)
-    }
-
-    private fun settingBottomSheetDialog() {
-        val settingBTM = BottomSheetDialog(this)
-        val inflater: LayoutInflater = getSystemService(LAYOUT_INFLATER_SERVICE) as LayoutInflater
-        val view: View = inflater.inflate(R.layout.design_setting_btm, null)
-        val settingBottomSheetBinding: DesignSettingBtmBinding =
-            DesignSettingBtmBinding.bind(view)
-
-        settingBottomSheetBinding.SettingSaveCredential.isChecked =
-            PreferenceHelper.getInstance().getBoolean(G.SaveCredential_SharedPreferencesKey)
-        settingBottomSheetBinding.SettingSaveCredential.setOnCheckedChangeListener { _, isChecked ->
-            PreferenceHelper.getInstance()
-                .setBoolean(G.SaveCredential_SharedPreferencesKey, isChecked)
-        }
-
-        settingBTM.setContentView(view)
-        settingBTM.behavior.state = BottomSheetBehavior.STATE_EXPANDED
-        settingBTM.show()
     }
 
     private fun importTelegramProxy() {
@@ -223,19 +173,26 @@ class MainActivity : AppCompatActivity() {
         val telegramProxyInputBinding: DesignTelegramInputDialogBinding =
             DesignTelegramInputDialogBinding.bind(view)
 
+        telegramProxyInputBinding.TelegramProxy.requestFocus()
+        inputDialog.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
+
         telegramProxyInputBinding.btnOK.setOnClickListener {
-            try {
+            if (telegramProxyInputBinding.TelegramProxy.text?.length!! < 5)
+                telegramProxyInputBinding.TelegramProxyLayout.error = "Enter the proxy"
+            else {
+                try {
+                    val myURI: Uri =
+                        Uri.parse(telegramProxyInputBinding.TelegramProxy.text.toString())
+                    binding.ProxyAddress.setText(myURI.getQueryParameter("server").toString())
+                    binding.ProxyPort.setText(myURI.getQueryParameter("port").toString())
 
-                val myURI: Uri = Uri.parse(telegramProxyInputBinding.TelegramProxy.text.toString())
-                binding.ProxyAddress.setText(myURI.getQueryParameter("server").toString())
-                binding.ProxyPort.setText(myURI.getQueryParameter("port").toString())
-
-                if (myURI.equals("username")) {
-                    binding.ProxyUsername.setText(myURI.getQueryParameter("user").toString())
-                    binding.ProxyPassword.setText(myURI.getQueryParameter("pass").toString())
+                    if (myURI.equals("username")) {
+                        binding.ProxyUsername.setText(myURI.getQueryParameter("user").toString())
+                        binding.ProxyPassword.setText(myURI.getQueryParameter("pass").toString())
+                    }
+                    inputDialog.dismiss()
+                } catch (ex: Exception) {
                 }
-                inputDialog.dismiss()
-            } catch (ex: Exception) {
             }
         }
         telegramProxyInputBinding.btnCancel.setOnClickListener { inputDialog.dismiss() }

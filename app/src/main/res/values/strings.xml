@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">ProxyChecker</string>
+    <string name="github_address" translatable="false">https://github.com/MrArashAzizi/ProxyChecker</string>
 </resources>

@@ -11,8 +11,8 @@ android {
         applicationId "github.arash.kotlin.proxychecker"
         minSdkVersion 21
         targetSdkVersion 30
-        versionCode 1
-        versionName "1.0"
+        versionCode 2
+        versionName "1.1"
 
         archivesBaseName = "ProxyChecker - v$versionCode"
 

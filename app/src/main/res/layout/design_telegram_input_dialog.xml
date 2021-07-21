@@ -5,7 +5,6 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@color/white"
-    android:layoutDirection="rtl"
     android:orientation="vertical">
 
     <LinearLayout
@@ -36,7 +35,6 @@
                 android:layout_height="wrap_content"
                 android:hint="Telegram Proxy"
                 android:singleLine="true"
-                android:text="Jack"
                 android:textColor="@color/black"
                 android:textCursorDrawable="@null"
                 android:textSize="17sp" />

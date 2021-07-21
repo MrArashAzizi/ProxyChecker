@@ -179,7 +179,6 @@
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="4dp"
             android:orientation="vertical"
             app:passwordToggleEnabled="true">
 
@@ -195,6 +194,13 @@
                 android:textSize="17sp" />
 
         </com.google.android.material.textfield.TextInputLayout>
+
+        <CheckBox
+            android:id="@+id/SaveCredentialCheckBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="4dp"
+            android:text="Save Credential" />
     </LinearLayout>
 
     <com.google.android.material.button.MaterialButton
