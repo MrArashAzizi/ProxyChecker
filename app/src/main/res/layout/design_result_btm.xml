@@ -9,7 +9,6 @@
     android:paddingLeft="16dp"
     android:paddingRight="16dp">
 
-
     <ImageView
         android:id="@+id/Minus"
         android:layout_width="40dp"
@@ -66,11 +65,12 @@
         android:id="@+id/resultFinalIP"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignTop="@+id/resultFinalIPTitle"
         android:layout_alignBottom="@+id/resultFinalIPTitle"
         android:layout_alignParentRight="true"
+        android:gravity="bottom"
+        android:paddingTop="8dp"
         android:text="255.255.255.255"
-        android:textColor="@color/black"
+        android:textColor="#002AFF"
         android:textSize="14sp" />
 
     <ImageView

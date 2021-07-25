@@ -10,9 +10,9 @@
     {
       "type": "SINGLE",
       "filters": [],
-      "versionCode": 1,
-      "versionName": "1.0",
-      "outputFile": "ProxyChecker - v1-release.apk"
+      "versionCode": 2,
+      "versionName": "1.1",
+      "outputFile": "ProxyChecker - v2-release.apk"
     }
   ]
 }

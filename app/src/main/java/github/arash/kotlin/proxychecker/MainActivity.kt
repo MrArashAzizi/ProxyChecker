@@ -14,6 +14,7 @@ import android.view.*
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import com.androidnetworking.AndroidNetworking
@@ -64,14 +65,14 @@ class MainActivity : AppCompatActivity() {
             binding.StartTheTestButton.isEnabled = false
 
             //Proxy Type
-            if (binding.ProxyTypeToggleGroup.checkedButtonId == R.id.ProxyTypeHTTPS)
-                okHttpClient = OkHttpClient.Builder().proxy(Proxy(Proxy.Type.HTTP,
+            okHttpClient = if (binding.ProxyTypeToggleGroup.checkedButtonId == R.id.ProxyTypeHTTPS)
+                OkHttpClient.Builder().proxy(Proxy(Proxy.Type.HTTP,
                     InetSocketAddress(binding.ProxyAddress.text.toString(),
-                                binding.ProxyPort.text.toString().toInt()))).build()
+                        binding.ProxyPort.text.toString().toInt()))).build()
             else
-                okHttpClient = OkHttpClient.Builder().proxy(Proxy(Proxy.Type.SOCKS,
+                OkHttpClient.Builder().proxy(Proxy(Proxy.Type.SOCKS,
                     InetSocketAddress(binding.ProxyAddress.text.toString(),
-                            binding.ProxyPort.text.toString().toInt()))).build()
+                        binding.ProxyPort.text.toString().toInt()))).build()
 
             //Proxy Credential
             Authenticator.setDefault(object : Authenticator() {
@@ -91,26 +92,11 @@ class MainActivity : AppCompatActivity() {
                 .build()
                 .getAsJSONObject(object : JSONObjectRequestListener {
                     override fun onResponse(response: JSONObject?) {
-                        Log.i("TheMainTAG", "Response: ${response.toString()}")
+                        Log.i("MainTAG", "Response: ${response.toString()}")
                         if (response!!.get("status").equals("success")) {
-                            val resultBottomSheet = BottomSheetDialog(this@MainActivity)
-                            resultBottomSheet.setContentView(R.layout.design_result_btm)
 
-                            val resultFinalIP: TextView? =
-                                resultBottomSheet.findViewById(R.id.resultFinalIP)
-                            val resultCountry: TextView? =
-                                resultBottomSheet.findViewById(R.id.resultCountry)
-                            val resultCity: TextView? =
-                                resultBottomSheet.findViewById(R.id.resultCity)
-                            val resultISP: TextView? =
-                                resultBottomSheet.findViewById(R.id.resultISP)
+                            resultBottomSheet(response)
 
-                            resultFinalIP?.text = response.get("query").toString()
-                            resultCountry?.text = response.get("country").toString()
-                            resultCity?.text = response.get("city").toString()
-                            resultISP?.text = response.get("isp").toString()
-                            resultBottomSheet.behavior.state = BottomSheetBehavior.STATE_EXPANDED
-                            resultBottomSheet.show()
                             binding.ProgressBar.visibility = GONE
                             binding.StartTheTestButton.text = "Test The Proxy"
                             binding.StartTheTestButton.isEnabled = true
@@ -122,11 +108,8 @@ class MainActivity : AppCompatActivity() {
                         binding.StartTheTestButton.text = "Test The Proxy"
                         binding.StartTheTestButton.isEnabled = true
                         Snackbar.make(binding.root, "Connection failed", Snackbar.LENGTH_LONG)
-                            .setAction("Copy info") {
-                                val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
-                                val clip = ClipData.newPlainText("Copied Text", anError?.message.toString())
-                                clipboard.setPrimaryClip(clip)
-                            }.show()
+                            .setAction("Copy info") { copyToClipboard(anError?.message.toString())}
+                            .show()
                     }
                 })
 
@@ -166,6 +149,34 @@ class MainActivity : AppCompatActivity() {
         return super.onOptionsItemSelected(item)
     }
 
+    private fun resultBottomSheet(response: JSONObject?){
+
+        val resultBottomSheet = BottomSheetDialog(this@MainActivity)
+        resultBottomSheet.setContentView(R.layout.design_result_btm)
+
+        val resultFinalIP: TextView? =
+            resultBottomSheet.findViewById(R.id.resultFinalIP)
+        val resultCountry: TextView? =
+            resultBottomSheet.findViewById(R.id.resultCountry)
+        val resultCity: TextView? =
+            resultBottomSheet.findViewById(R.id.resultCity)
+        val resultISP: TextView? =
+            resultBottomSheet.findViewById(R.id.resultISP)
+
+        resultFinalIP?.text = response?.get("query").toString()
+        resultCountry?.text = response?.get("country").toString()
+        resultCity?.text = response?.get("city").toString()
+        resultISP?.text = response?.get("isp").toString()
+
+        resultFinalIP!!.setOnClickListener {
+            copyToClipboard(response?.get("query").toString())
+            Toast.makeText(this@MainActivity,"Copied",Toast.LENGTH_SHORT).show()
+        }
+
+        resultBottomSheet.behavior.state = BottomSheetBehavior.STATE_EXPANDED
+        resultBottomSheet.show()
+    }
+
     private fun importTelegramProxy() {
         val inputDialog: AlertDialog = AlertDialog.Builder(this@MainActivity).create()
         val inflater: LayoutInflater = getSystemService(LAYOUT_INFLATER_SERVICE) as LayoutInflater
@@ -198,6 +209,12 @@ class MainActivity : AppCompatActivity() {
         telegramProxyInputBinding.btnCancel.setOnClickListener { inputDialog.dismiss() }
         inputDialog.setView(telegramProxyInputBinding.root)
         inputDialog.show()
+    }
+
+    fun copyToClipboard(content:String){
+        val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
+        val clip = ClipData.newPlainText("Copied Text", content)
+        clipboard.setPrimaryClip(clip)
     }
 
 }
