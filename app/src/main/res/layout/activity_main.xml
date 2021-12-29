@@ -29,10 +29,9 @@
             style="@style/Widget.AppCompat.ProgressBar.Horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="-7dp"
-            android:layout_marginBottom="-7dp"
+            android:layout_marginBottom="-5dp"
             android:indeterminate="true"
-            android:indeterminateTint="@color/white"
+            android:indeterminateTint="#259DD9"
             android:visibility="gone" />
 
         <TextView
@@ -42,7 +41,7 @@
             android:layout_gravity="top|center_horizontal"
             android:background="#D30000"
             android:gravity="center"
-            android:padding="6dp"
+            android:padding="4dp"
             android:text="TURN OFF YOUR VPN TO ENSURE THE RESULT"
             android:textAlignment="center"
             android:textColor="@color/white"
@@ -54,164 +53,28 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/AppBarLayout"
-        android:layout_margin="@dimen/main_margin"
-        android:orientation="vertical">
+        android:layout_height="match_parent"
+        android:layout_above="@id/btnGO"
+        android:layout_below="@id/AppBarLayout">
 
-        <TextView
+        <FrameLayout
+            android:id="@+id/settings"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Proxy Type" />
-
-        <com.google.android.material.button.MaterialButtonToggleGroup
-            android:id="@+id/ProxyTypeToggleGroup"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:checkedButton="@id/ProxyTypeHTTPS"
-            app:selectionRequired="true"
-            app:singleSelection="true">
-
-            <Button
-                android:id="@+id/ProxyTypeHTTPS"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="0.5"
-                android:text="HTTP/S"
-                android:textColor="@color/black" />
-
-            <Button
-                android:id="@+id/ProxyTypeSocks5"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="0.5"
-                android:text="Socks5"
-                android:textColor="@color/black" />
-
-        </com.google.android.material.button.MaterialButtonToggleGroup>
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Proxy Address and port" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:orientation="horizontal">
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/ProxyAddressLayout"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginRight="4dp"
-                android:layout_weight="0.7"
-                android:orientation="vertical">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/ProxyAddress"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="Proxy Address"
-                    android:inputType="textNoSuggestions"
-                    android:singleLine="true"
-                    android:textColor="@color/black"
-                    android:textCursorDrawable="@null"
-                    android:textSize="17sp" />
-
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/ProxyPortLayout"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="0.4"
-                android:orientation="vertical">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/ProxyPort"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="Proxy Port"
-                    android:inputType="number"
-                    android:singleLine="true"
-                    android:textColor="@color/black"
-                    android:textCursorDrawable="@null"
-                    android:textSize="17sp" />
-
-            </com.google.android.material.textfield.TextInputLayout>
-        </LinearLayout>
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="Proxy Credential (Optional)" />
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/ProxyUsernameLayout"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:orientation="vertical">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/ProxyUsername"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="4dp"
-                android:hint="Username"
-                android:singleLine="true"
-                android:textColor="@color/black"
-                android:textCursorDrawable="@null"
-                android:textSize="17sp" />
-
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/ProxyPasswordLayout"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            app:passwordToggleEnabled="true">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/ProxyPassword"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Password"
-                android:inputType="textPassword"
-                android:singleLine="true"
-                android:textColor="@color/black"
-                android:textCursorDrawable="@null"
-                android:textSize="17sp" />
-
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <CheckBox
-            android:id="@+id/SaveCredentialCheckBox"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="4dp"
-            android:text="Save Credential" />
+            android:layout_height="match_parent" />
     </LinearLayout>
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/StartTheTestButton"
-        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+
+    <TextView
+        android:id="@+id/btnGO"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:layout_margin="@dimen/main_margin"
+        android:background="?attr/colorPrimary"
+        android:gravity="center"
         android:padding="18dp"
-        android:text="Test The Proxy"
-        app:strokeColor="#A5A5A5" />
+        android:text="Start Checking"
+        android:textColor="@color/white"
+        android:textSize="16sp"
+        android:textStyle="bold" />
 
 </RelativeLayout>

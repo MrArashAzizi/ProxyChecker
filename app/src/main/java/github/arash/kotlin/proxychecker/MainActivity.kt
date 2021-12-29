@@ -1,22 +1,20 @@
 package github.arash.kotlin.proxychecker
 
 import android.app.AlertDialog
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
-import android.content.Intent
+import android.content.*
 import android.net.ConnectivityManager
 import android.net.Uri
 import android.os.Bundle
 import android.os.StrictMode
 import android.util.Log
 import android.view.*
-import android.view.View.GONE
-import android.view.View.VISIBLE
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.preference.Preference
+import androidx.preference.PreferenceFragmentCompat
+import androidx.preference.PreferenceManager
 import com.androidnetworking.AndroidNetworking
 import com.androidnetworking.error.ANError
 import com.androidnetworking.interfaces.JSONObjectRequestListener
@@ -39,98 +37,112 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
         super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+        if (savedInstanceState == null) {
+            supportFragmentManager
+                .beginTransaction()
+                .replace(R.id.settings, SettingsFragment())
+                .commit()
+        }
+
         binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-        setSupportActionBar(binding.toolbar)
+        binding.apply {
+            setContentView(root)
+            setSupportActionBar(toolbar)
+            val preferenceManager = PreferenceManager.getDefaultSharedPreferences(this@MainActivity)
 
-        AndroidNetworking.initialize(this)
-        PreferenceHelper.initialize(this)
+            AndroidNetworking.initialize(this@MainActivity)
 
-        StrictMode.setThreadPolicy(StrictMode.ThreadPolicy.Builder().permitAll().build())
+            StrictMode.setThreadPolicy(StrictMode.ThreadPolicy.Builder().permitAll().build())
 
-        //Enter data from SharedPreferences
-        binding.ProxyAddress.setText(PreferenceHelper.getInstance().getString(G.ProxyAddress_SharedPreferencesKey, ""))
-        binding.ProxyPort.setText(PreferenceHelper.getInstance().getString(G.PortNumber_SharedPreferencesKey, ""))
-        binding.ProxyUsername.setText(PreferenceHelper.getInstance().getString(G.Username_SharedPreferencesKey, ""))
-        binding.ProxyPassword.setText(PreferenceHelper.getInstance().getString(G.Password_SharedPreferencesKey, ""))
+            val connectivityManager: ConnectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+            connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_VPN)?.let {
+                if(preferenceManager.getBoolean("VPN_ALERT", true) && it.isConnectedOrConnecting)
+                    binding.vpnAlertTV.visibility = View.VISIBLE
+            }
 
-        val connectivityManager: ConnectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        if (connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_VPN)!!.isConnectedOrConnecting)
-            binding.vpnAlertTV.visibility = VISIBLE
+            var okHttpClient: OkHttpClient
+            btnGO.setOnClickListener {
+                try {
 
-        var okHttpClient: OkHttpClient
-        binding.StartTheTestButton.setOnClickListener {
-            binding.ProgressBar.visibility = VISIBLE
-            binding.StartTheTestButton.text = "Please Wait..."
-            binding.StartTheTestButton.isEnabled = false
+                    ProgressBar.visibility = View.VISIBLE
+                    btnGO.text = "Please Wait..."
+                    btnGO.isEnabled = false
 
-            //Proxy Type
-            okHttpClient = if (binding.ProxyTypeToggleGroup.checkedButtonId == R.id.ProxyTypeHTTPS)
-                OkHttpClient.Builder().proxy(Proxy(Proxy.Type.HTTP,
-                    InetSocketAddress(binding.ProxyAddress.text.toString(),
-                        binding.ProxyPort.text.toString().toInt()))).build()
-            else
-                OkHttpClient.Builder().proxy(Proxy(Proxy.Type.SOCKS,
-                    InetSocketAddress(binding.ProxyAddress.text.toString(),
-                        binding.ProxyPort.text.toString().toInt()))).build()
+                    val proxyAddress: String? = preferenceManager.getString("ProxyServer", null)
+                    val proxyPort: String? = preferenceManager.getString("RemotePort", null)
 
-            //Proxy Credential
-            Authenticator.setDefault(object : Authenticator() {
-                override fun getPasswordAuthentication(): PasswordAuthentication? {
-                    if (requestingHost.equals(binding.ProxyAddress.text.toString()))
-                        if (requestingPort == binding.ProxyPort.text.toString().toInt())
-                            return PasswordAuthentication(binding.ProxyUsername.text.toString(),
-                                binding.ProxyPassword.text.toString().toCharArray()
-                    )
-                    return null
-                }
-            })
+                    //Proxy Type with okHttpClient
+                    okHttpClient = OkHttpClient.Builder().proxy(Proxy(
+                        when (preferenceManager.getString("ProxyType", "socks5")) {
+                            "socks5" -> Proxy.Type.SOCKS
+                            else -> Proxy.Type.HTTP
+                        }, InetSocketAddress(proxyAddress, proxyPort!!.toInt()))).build()
 
-            //Make a Get Request
-            AndroidNetworking.get("http://ip-api.com/json")
-                .setOkHttpClient(okHttpClient)
-                .build()
-                .getAsJSONObject(object : JSONObjectRequestListener {
-                    override fun onResponse(response: JSONObject?) {
-                        Log.i("MainTAG", "Response: ${response.toString()}")
-                        if (response!!.get("status").equals("success")) {
-
-                            resultBottomSheet(response)
-
-                            binding.ProgressBar.visibility = GONE
-                            binding.StartTheTestButton.text = "Test The Proxy"
-                            binding.StartTheTestButton.isEnabled = true
+                    //Proxy Credential
+                    Authenticator.setDefault(object : Authenticator() {
+                        override fun getPasswordAuthentication(): PasswordAuthentication? {
+                            if (requestingHost.equals(proxyAddress))
+                                if (requestingPort ==  proxyPort.toInt())
+                                    return PasswordAuthentication(preferenceManager.getString("CredentialUsername", null),
+                                        preferenceManager.getString("CredentialPassword", null)?.toCharArray())
+                            return null
                         }
-                    }
+                    })
 
-                    override fun onError(anError: ANError?) {
-                        binding.ProgressBar.visibility = GONE
-                        binding.StartTheTestButton.text = "Test The Proxy"
-                        binding.StartTheTestButton.isEnabled = true
-                        Snackbar.make(binding.root, "Connection failed", Snackbar.LENGTH_LONG)
-                            .setAction("Copy info") { copyToClipboard(anError?.message.toString())}
-                            .show()
-                    }
-                })
+                    val startTime = System.currentTimeMillis()
+                    //Make a Get Request
+                    AndroidNetworking.get("http://ip-api.com/json")
+                        .setOkHttpClient(okHttpClient)
+                        .doNotCacheResponse()
+                        .build()
+                        .getAsJSONObject(object : JSONObjectRequestListener {
+                            override fun onResponse(response: JSONObject?) {
+                                Log.i("MainTAG", "Response: ${response.toString()}")
+                                if (response!!.get("status").equals("success")) {
+                                    val endTime = System.currentTimeMillis()
+                                    resultBottomSheet(response, endTime - startTime)
+                                    ProgressBar.visibility = View.GONE
+                                    btnGO.text = "Start Checking"
+                                    btnGO.isEnabled = true
+                                }
+                            }
 
-            PreferenceHelper.getInstance().setString(G.ProxyAddress_SharedPreferencesKey, binding.ProxyAddress.text.toString())
-            PreferenceHelper.getInstance().setString(G.PortNumber_SharedPreferencesKey, binding.ProxyPort.text.toString())
+                            override fun onError(anError: ANError?) {
+                                ProgressBar.visibility = View.GONE
+                                btnGO.text = "Start Checking"
+                                btnGO.isEnabled = true
+                                Snackbar.make(root, "Connection failed | ${anError?.errorCode}", Snackbar.LENGTH_LONG).setAnchorView(btnGO)
+                                    .setAction("Copy info") { copyToClipboard(anError?.message.toString())}
+                                    .show()
+                            }
+                        })
 
-            if (PreferenceHelper.getInstance().getBoolean(G.SaveCredential_SharedPreferencesKey)) {
-                PreferenceHelper.getInstance()
-                    .setString(G.Username_SharedPreferencesKey, binding.ProxyUsername.text.toString())
-                PreferenceHelper.getInstance()
-                    .setString(G.Password_SharedPreferencesKey, binding.ProxyPassword.text.toString())
+                }catch (ex:Exception){
+                    ex.printStackTrace()
+                    ProgressBar.visibility = View.GONE
+                    btnGO.text = "Start Checking"
+                    btnGO.isEnabled = true
+                    Snackbar.make(root, "ERROR!", Snackbar.LENGTH_LONG).setAnchorView(btnGO)
+                        .setAction("Copy info") { copyToClipboard(ex.toString())}
+                        .show()
+                }
             }
         }
 
-        binding.SaveCredentialCheckBox.isChecked =
-            PreferenceHelper.getInstance().getBoolean(G.SaveCredential_SharedPreferencesKey)
-        binding.SaveCredentialCheckBox.setOnCheckedChangeListener { _, isChecked ->
-            PreferenceHelper.getInstance()
-                .setBoolean(G.SaveCredential_SharedPreferencesKey, isChecked)
+    }
+
+    class SettingsFragment : PreferenceFragmentCompat() {
+        override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+            setPreferencesFromResource(R.xml.root_preferences, rootKey)
         }
 
+        override fun onPreferenceTreeClick(preference: Preference?): Boolean {
+            when(preference?.key){
+                "MoreMY_IP" -> MyIpDialog().show(requireContext())
+            }
+            return super.onPreferenceTreeClick(preference)
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -143,70 +155,77 @@ class MainActivity : AppCompatActivity() {
         when (item.itemId) {
             R.id.Action_Github ->
                 startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.github_address))))
-
-            R.id.Action_ImportTelegramProxy -> importTelegramProxy()
+            R.id.Action_ImportTelegramProxy ->
+                importTelegramProxy()
         }
         return super.onOptionsItemSelected(item)
     }
 
-    private fun resultBottomSheet(response: JSONObject?){
+    private fun resultBottomSheet(response: JSONObject?, elapsedTime: Long){
+        BottomSheetDialog(this@MainActivity).apply {
+            setContentView(R.layout.design_result_btm)
 
-        val resultBottomSheet = BottomSheetDialog(this@MainActivity)
-        resultBottomSheet.setContentView(R.layout.design_result_btm)
+            val resultElapsedTime: TextView? = findViewById(R.id.resultElapsedTime)
+            val resultFinalIP: TextView? = findViewById(R.id.resultFinalIP)
+            val resultCountry: TextView? = findViewById(R.id.resultCountry)
+            val resultCity: TextView? = findViewById(R.id.resultCity)
+            val resultISP: TextView? = findViewById(R.id.resultISP)
 
-        val resultFinalIP: TextView? =
-            resultBottomSheet.findViewById(R.id.resultFinalIP)
-        val resultCountry: TextView? =
-            resultBottomSheet.findViewById(R.id.resultCountry)
-        val resultCity: TextView? =
-            resultBottomSheet.findViewById(R.id.resultCity)
-        val resultISP: TextView? =
-            resultBottomSheet.findViewById(R.id.resultISP)
+            resultElapsedTime?.text = "Data received in ${elapsedTime}ms."
+            resultFinalIP?.text = response?.get("query").toString()
+            resultCountry?.text = response?.get("country").toString()
+            resultCity?.text = response?.get("city").toString()
+            resultISP?.text = response?.get("isp").toString()
 
-        resultFinalIP?.text = response?.get("query").toString()
-        resultCountry?.text = response?.get("country").toString()
-        resultCity?.text = response?.get("city").toString()
-        resultISP?.text = response?.get("isp").toString()
+            resultFinalIP!!.setOnClickListener {
+                copyToClipboard(response?.get("query").toString())
+                Toast.makeText(this@MainActivity,"Copied", Toast.LENGTH_SHORT).show()
+            }
 
-        resultFinalIP!!.setOnClickListener {
-            copyToClipboard(response?.get("query").toString())
-            Toast.makeText(this@MainActivity,"Copied",Toast.LENGTH_SHORT).show()
-        }
-
-        resultBottomSheet.behavior.state = BottomSheetBehavior.STATE_EXPANDED
-        resultBottomSheet.show()
+            behavior.state = BottomSheetBehavior.STATE_EXPANDED
+        }.show()
     }
 
     private fun importTelegramProxy() {
+        val preferenceManager = PreferenceManager.getDefaultSharedPreferences(this)
+        val editor: SharedPreferences.Editor = preferenceManager.edit()
+
         val inputDialog: AlertDialog = AlertDialog.Builder(this@MainActivity).create()
         val inflater: LayoutInflater = getSystemService(LAYOUT_INFLATER_SERVICE) as LayoutInflater
         val view: View = inflater.inflate(R.layout.design_telegram_input_dialog, null)
         val telegramProxyInputBinding: DesignTelegramInputDialogBinding =
             DesignTelegramInputDialogBinding.bind(view)
 
-        telegramProxyInputBinding.TelegramProxy.requestFocus()
-        inputDialog.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
+        telegramProxyInputBinding.apply {
+            TelegramProxy.requestFocus()
+            inputDialog.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
 
-        telegramProxyInputBinding.btnOK.setOnClickListener {
-            if (telegramProxyInputBinding.TelegramProxy.text?.length!! < 5)
-                telegramProxyInputBinding.TelegramProxyLayout.error = "Enter the proxy"
-            else {
-                try {
-                    val myURI: Uri =
-                        Uri.parse(telegramProxyInputBinding.TelegramProxy.text.toString())
-                    binding.ProxyAddress.setText(myURI.getQueryParameter("server").toString())
-                    binding.ProxyPort.setText(myURI.getQueryParameter("port").toString())
+            btnOK.setOnClickListener {
+                if (TelegramProxy.text?.length!! < 5)
+                    TelegramProxyLayout.error = "Enter the proxy"
+                else {
+                    try {
+                        val myURI: Uri = Uri.parse(telegramProxyInputBinding.TelegramProxy.text.toString())
 
-                    if (myURI.equals("username")) {
-                        binding.ProxyUsername.setText(myURI.getQueryParameter("user").toString())
-                        binding.ProxyPassword.setText(myURI.getQueryParameter("pass").toString())
+                        editor.apply{
+                            putString("ProxyServer", myURI.getQueryParameter("server").toString())
+                            putString("RemotePort", myURI.getQueryParameter("port").toString())
+                            if (myURI.equals("username")) {
+                                putString("CredentialUsername", myURI.getQueryParameter("user").toString())
+                                putString("CredentialPassword", myURI.getQueryParameter("pass").toString())
+                            }
+                        }.apply()
+
+                        inputDialog.dismiss()
+                        recreate() // MainActivity
+                    } catch (ex: Exception) {
+                        ex.printStackTrace()
                     }
-                    inputDialog.dismiss()
-                } catch (ex: Exception) {
                 }
             }
+            btnCancel.setOnClickListener { inputDialog.dismiss() }
         }
-        telegramProxyInputBinding.btnCancel.setOnClickListener { inputDialog.dismiss() }
+
         inputDialog.setView(telegramProxyInputBinding.root)
         inputDialog.show()
     }
@@ -216,5 +235,4 @@ class MainActivity : AppCompatActivity() {
         val clip = ClipData.newPlainText("Copied Text", content)
         clipboard.setPrimaryClip(clip)
     }
-
 }
